@@ -43,6 +43,23 @@ jobs:
           # Also patch the version catalog used by subproject dependency resolution.
           sed -i 's/kotlin = "1.9.24"/kotlin = "1.9.25"/' node_modules/react-native/gradle/libs.versions.toml
 
+      - name: Fix react-native-screens SafeAreaView type mismatch (Insets vs EdgeInsets)
+        run: |
+          # SafeAreaView.kt compares androidx.core.graphics.Insets with data class EdgeInsets
+          # using !=, which Kotlin rejects because data class equals never returns true for
+          # an unrelated type. Fix: convert to EdgeInsets first, then compare.
+          python3 - <<'EOF'
+          import pathlib
+          f = pathlib.Path("node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt")
+          src = f.read_text()
+          src = src.replace(
+              "        if (newSystemInsets != currentSystemInsets) {\n            currentSystemInsets = EdgeInsets.fromInsets(newSystemInsets)",
+              "        val newEdgeInsets = EdgeInsets.fromInsets(newSystemInsets)\n        if (newEdgeInsets != currentSystemInsets) {\n            currentSystemInsets = newEdgeInsets"
+          )
+          f.write_text(src)
+          print("Patched SafeAreaView.kt")
+          EOF
+
       - name: Build release APK
         working-directory: android
         env:
