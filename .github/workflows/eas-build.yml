@@ -1,4 +1,4 @@
-name: EAS Build (APK)
+name: Build Android APK
 
 on:
   push:
@@ -9,6 +9,7 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,22 +19,39 @@ jobs:
         with:
           node-version: 20
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Install dependencies
         run: npm install
 
-      - name: Setup Android Keystore
+      - name: Restore Android Keystore
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > accordeur.keystore
-          printf '{"android":{"keystore":{"keystorePath":"accordeur.keystore","keystorePassword":"%s","keyAlias":"%s","keyPassword":"%s"}}}' \
-            "${{ secrets.ANDROID_STORE_PASSWORD }}" \
-            "${{ secrets.ANDROID_KEY_ALIAS }}" \
-            "${{ secrets.ANDROID_KEY_PASSWORD }}" > credentials.json
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build release APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ../accordeur.keystore
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$ANDROID_KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$ANDROID_STORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$ANDROID_KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$ANDROID_KEY_PASSWORD
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Build APK (preview)
-        run: eas build --platform android --profile preview --non-interactive
+          name: accordeur-release
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
