@@ -21,6 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Setup Android Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > accordeur.keystore
+          printf '{"android":{"keystore":{"keystorePath":"accordeur.keystore","keystorePassword":"%s","keyAlias":"%s","keyPassword":"%s"}}}' \
+            "${{ secrets.ANDROID_STORE_PASSWORD }}" \
+            "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            "${{ secrets.ANDROID_KEY_PASSWORD }}" > credentials.json
+
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
