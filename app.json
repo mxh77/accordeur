@@ -30,6 +30,11 @@
     "plugins": [
       "expo-router"
     ],
-    "scheme": "accordeur"
+    "scheme": "accordeur",
+    "extra": {
+      "eas": {
+        "projectId": "1387582a-797e-46ce-98e5-9863e3437d9a"
+      }
+    }
   }
 }
