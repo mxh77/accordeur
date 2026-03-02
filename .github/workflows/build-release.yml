@@ -35,6 +35,9 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
+      - name: Fix Kotlin version (RN 0.76.5 ships 1.9.24, expo-modules-core needs 1.9.25)
+        run: sed -i 's/kotlin = "1.9.24"/kotlin = "1.9.25"/' android/gradle/libs.versions.toml
+
       - name: Build release APK
         working-directory: android
         env:
