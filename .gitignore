@@ -13,3 +13,4 @@ web-build/
 package-lock.json
 credentials.json
 *.keystore
+android/
