@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 
 import TutorialStep from '../../components/learn/TutorialStep';
-import StringDiagram from '../../components/tunings/StringDiagram';
+import StringDiagram from '../../components/learn/StringDiagram';
 
 const STEPS = [
   {
