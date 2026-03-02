@@ -35,8 +35,13 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
-      - name: Fix Kotlin version (RN 0.76.5 ships 1.9.24, expo-modules-core needs 1.9.25)
-        run: sed -i 's/kotlin = "1.9.24"/kotlin = "1.9.25"/' node_modules/react-native/gradle/libs.versions.toml
+      - name: Fix Kotlin version (RN 0.76.5 composite build locks 1.9.24, expo-modules-core needs 1.9.25)
+        run: |
+          # Pin kotlin-gradle-plugin explicitly in the generated build.gradle so the
+          # composite-build version from @react-native/gradle-plugin is overridden.
+          sed -i "s|classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')|classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25')|" android/build.gradle
+          # Also patch the version catalog used by subproject dependency resolution.
+          sed -i 's/kotlin = "1.9.24"/kotlin = "1.9.25"/' node_modules/react-native/gradle/libs.versions.toml
 
       - name: Build release APK
         working-directory: android
